@@ -1,0 +1,34 @@
+// pins.h
+
+#ifndef PINS_H
+#define PINS_H
+
+// Define os pinos
+#define PIN_RPM 15
+#define PIN_INJECTOR_A 2
+#define PIN_INJECTOR_B 4
+#define PIN_INJECTOR_C 5
+#define PIN_INJECTOR_D 18
+#define PIN_MANOMETER 19
+#define PIN_MAP_REDUCTOR 21
+#define PIN_MAP_COLECTOR 22
+#define PIN_TEMP_GNV 23
+#define PIN_HPS 25
+#define PIN_LPS 26
+
+// Enum para os canais PWM
+enum Channel {
+  CHANNEL_RPM = 0,
+  CHANNEL_INJECTOR_A = 1,
+  CHANNEL_INJECTOR_B = 2,
+  CHANNEL_INJECTOR_C = 3,
+  CHANNEL_INJECTOR_D = 4,
+  CHANNEL_MANOMETER = 5,
+  CHANNEL_MAP_REDUCTOR = 6,
+  CHANNEL_MAP_COLECTOR = 7,
+  CHANNEL_TEMP_GNV = 8,
+  CHANNEL_HPS = 9,
+  CHANNEL_LPS = 10
+};
+
+#endif
