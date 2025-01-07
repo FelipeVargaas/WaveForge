@@ -1,164 +1,96 @@
+import json
 import ttkbootstrap as ttk
 from ttkbootstrap.widgets import Meter
-import json
-import serial
-import serial.tools.list_ports
+from tkinter import filedialog, messagebox
 
-# Função para listar portas COM disponíveis
-def listar_portas():
-    portas = serial.tools.list_ports.comports()
-    return [porta.device for porta in portas]
-
-# Função para conectar à porta serial escolhida
-def conectar_serial():
-    porta = porta_var.get()
-    baudrate = baudrate_var.get()
-    
-    if porta and baudrate:
-        try:
-            global bluetooth
-            bluetooth = serial.Serial(porta, baudrate, timeout=1)
-            status_label.configure(text=f"Conectado à {porta} com baudrate {baudrate}")
-        except serial.SerialException as e:
-            status_label.configure(text=f"Erro ao conectar: {e}")
-    else:
-        status_label.configure(text="Selecione uma porta e baudrate válidos!")
-
-# Função para carregar configurações de um arquivo JSON
-def carregar_configuracoes():
+# Função para carregar configurações do JSON e atualizar os valores dos meters
+def load_config():
     try:
-        with open("config.json", "r") as arquivo:
-            return json.load(arquivo)
-    except FileNotFoundError:
-        # Configurações padrão
-        config = {
-            "meters": [
-                {"command": "SET_RPM", "label": "RPM", "maxVal": 5000, "unit": ""},
-                {"command": "SET_PEDAL", "label": "Pedal", "maxVal": 1000, "unit": ""},
-                {"command": "SET_MANOMETER", "label": "Manômetro", "maxVal": 250, "unit": "bar"},
-                {"command": "SET_TRED", "label": "T.Red", "maxVal": 100, "unit": "°C"},
-            ]
-        }
-        salvar_configuracoes(config)
-        return config
+        # Abrir uma janela de diálogo para escolher o arquivo JSON
+        filepath = filedialog.askopenfilename(
+            title="Selecione o arquivo de configuração",
+            filetypes=[("Arquivos JSON", "*.json")]
+        )
+        if not filepath:
+            return  # Caso o usuário cancele a seleção
 
-# Função para salvar configurações em um arquivo JSON
-def salvar_configuracoes(config):
-    with open("config.json", "w") as arquivo:
-        json.dump(config, arquivo, indent=4)
+        # Abrir e carregar o conteúdo do arquivo JSON
+        with open(filepath, 'r') as file:
+            config = json.load(file)
 
-# Função para abrir janela de configuração
-def abrir_janela_configuracao():
-    config_window = ttk.Toplevel(app)
-    config_window.title("Editar Configurações")
-    config_window.geometry("400x300")
+        # Atualizar os valores dos meters com base nas chaves do JSON
+        for label, meter in zip(labels, meters):
+            if label in config:
+                value = config[label]
+                meter.amountusedvar.set(value)  # Atualiza o valor interno
+                meter.configure(amountused=value)  # Atualiza visualmente o Meter
+    except json.JSONDecodeError:
+        messagebox.showerror("Erro no arquivo", "O arquivo selecionado não é um JSON válido.")
+    except Exception as e:
+        messagebox.showerror("Erro", f"Ocorreu um erro ao carregar o arquivo: {e}")
 
-    ttk.Label(config_window, text="Editar Configurações", font=("Helvetica", 16)).grid(row=0, column=0, columnspan=2, pady=10)
+# Criar a aplicação principal
+app = ttk.Window(themename="superhero")
+app.title("Meters com Configuração JSON")
+app.geometry("600x400")
 
-    # Exibir as configurações atuais e permitir edição
-    for i, meter in enumerate(config["meters"]):
-        ttk.Label(config_window, text=f"Meter {i + 1}:").grid(row=i + 1, column=0, sticky="w", padx=10)
-        command_entry = ttk.Entry(config_window, width=15)
-        command_entry.insert(0, meter["command"])
-        command_entry.grid(row=i + 1, column=1, padx=10)
-
-        label_entry = ttk.Entry(config_window, width=15)
-        label_entry.insert(0, meter["label"])
-        label_entry.grid(row=i + 1, column=2, padx=10)
-
-        max_val_entry = ttk.Entry(config_window, width=10)
-        max_val_entry.insert(0, meter["maxVal"])
-        max_val_entry.grid(row=i + 1, column=3, padx=10)
-
-        unit_entry = ttk.Entry(config_window, width=10)
-        unit_entry.insert(0, meter["unit"])
-        unit_entry.grid(row=i + 1, column=4, padx=10)
-
-    ttk.Button(config_window, text="Salvar", command=lambda: salvar_configuracoes(config)).grid(row=len(config["meters"]) + 1, column=0, columnspan=5, pady=10)
-
-# Função para criar Meter e Botão de envio
-def create_meter_and_button(parent, row, col, label_text, max_value, meter_label, command):
+# Função para criar Meter, Botão de envio e garantir que o valor seja inteiro
+def create_meter_and_button(parent, row, col, label_text, min_value, max_value, unit, initial_value, meter_label, command):
+    # Frame para o meter, botão e o label
     frame = ttk.Frame(parent)
-    frame.grid(row=row, column=col, pady=10, padx=10, sticky="nsew")
+    frame.grid(row=row, column=col, pady=10, padx=10, sticky="ew")
 
+    # Meter
     meter = Meter(
         frame,
         subtext=meter_label,
         amounttotal=max_value,
+        amountused=initial_value,
         metersize=140,
         metertype="semi",
         bootstyle="success",
+        stepsize=(max_value / 100),
+        stripethickness=2,
+        textright=unit,
         interactive=True
     )
     meter.grid(row=0, column=0, padx=10, sticky="ew")
 
+    # Botão Send
     send_button = ttk.Button(frame, text="Send", bootstyle="success",
-                             command=lambda: send_command(round(meter.amountusedvar.get()), command))
+                             command=lambda: send_command(round(meter.amountusedvar.get()), command))  # Arredonda o valor para inteiro
     send_button.grid(row=1, column=0, padx=10, sticky="ew")
 
     return meter
 
-# Função para enviar comandos
-def send_command(value, command):
-    if bluetooth:
-        command_message = f"{command}:{value}\n"
-        bluetooth.write(command_message.encode())
-        print(f"Comando enviado: {command_message}")
-    else:
-        print("Bluetooth não está conectado.")
-
-# Janela principal
-app = ttk.Window(themename="darkly")
-app.title("Wave Forge")
-app.geometry("800x700")
-
-# Carregar configurações
-config = carregar_configuracoes()
-
-# Barra de menu
-barra_menu = ttk.Menubutton(app, text="Menu", bootstyle="primary")
-barra_menu.grid(row=0, column=0, padx=10, pady=5)
-
-menu_opcoes = ttk.Menu(barra_menu, tearoff=False)
-barra_menu["menu"] = menu_opcoes
-menu_opcoes.add_command(label="Editar Configurações", command=abrir_janela_configuracao)
-
-# Variáveis para porta e baudrate
-porta_var = ttk.StringVar()
-baudrate_var = ttk.IntVar(value=9600)
-
-# Frame para conexão
-conexao_frame = ttk.Frame(app)
-conexao_frame.grid(row=0, column=1, sticky="e", padx=10, pady=5)
-
-porta_menu = ttk.Menubutton(conexao_frame, text="Selecionar Porta", bootstyle="primary")
-porta_menu.grid(row=0, column=0, padx=5)
-
-menu_conexao = ttk.Menu(porta_menu, tearoff=False)
-porta_menu["menu"] = menu_conexao
-for porta in listar_portas():
-    menu_conexao.add_radiobutton(label=porta, variable=porta_var, value=porta)
-
-baudrate_menu = ttk.Menubutton(conexao_frame, text="Selecionar Baudrate", bootstyle="primary")
-baudrate_menu.grid(row=0, column=1, padx=5)
-for baudrate in [9600, 19200, 38400, 57600, 115200]:
-    menu_conexao.add_radiobutton(label=str(baudrate), variable=baudrate_var, value=baudrate)
-
-conectar_button = ttk.Button(conexao_frame, text="Conectar", bootstyle="success", command=conectar_serial)
-conectar_button.grid(row=0, column=2, padx=5)
-
-status_label = ttk.Label(conexao_frame, text="Não conectado", bootstyle="info")
-status_label.grid(row=0, column=3, padx=5)
-
-# Frame principal para os meters
+# Frame principal
 main_frame = ttk.Frame(app)
-main_frame.grid(row=1, column=0, columnspan=2, pady=20, padx=40, sticky="nsew")
+main_frame.pack(pady=20, padx=40, fill="x", expand=True)
 
-# Criar meters a partir das configurações
-for i, meter in enumerate(config["meters"]):
-    row = i // 4
-    col = i % 4
-    create_meter_and_button(main_frame, row, col, meter["label"], meter["maxVal"], f"{meter['label']} ({meter['unit']})", meter["command"])
+# Criar múltiplos meters e botões de envio em 4 colunas e 3 linhas
+meters = []
+commands = ["SET_RPM", "SET_PEDAL", "SET_TEMP", "SET_PRESSURE", "SET_FUEL", "SET_AIRFLOW", "SET_OIL_TEMP", "SET_COOLANT_TEMP",
+            "SET_VOLTAGE", "SET_SPEED", "SET_INJECTOR_A", "SET_INJECTOR_B"]
+labels = ["RPM", "Pedal", "Manômetro", "T.Red", "Injetor A", "Injetor B", "Injetor C", "Injetor D",
+          "MAP", "T.GNV", "P.GNV", "HPS"]
+maxVal = [5000, 1000, 250, 100, 25, 25, 25, 25, 100, 100, 100, 100]
+unit = ["", "", "bar", "°C", "ms", "ms", "ms", "ms", "bar", "°C", "bar", "bar"]
 
-# Iniciar aplicação
+# Loop para criar os meters organizados em 4 colunas e 3 linhas
+for i in range(12):
+    row = i // 4  # Define a linha
+    col = i % 4  # Define a coluna
+    meter = create_meter_and_button(main_frame, row, col, labels[i], 0, maxVal[i], unit[i], 0, labels[i], commands[i])
+    meters.append(meter)
+
+# Botão para carregar configurações
+load_button = ttk.Button(
+    app,
+    text="Carregar Configurações",
+    bootstyle="primary",
+    command=load_config
+)
+load_button.pack(pady=20)
+
+# Iniciar o loop principal da aplicação
 app.mainloop()

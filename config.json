@@ -1,0 +1,14 @@
+{
+    "RPM": 2000,
+    "Pedal": 50,
+    "Manômetro": 100,
+    "T.Red": 25,
+    "Injetor A": 10,
+    "Injetor B": 15,
+    "Injetor C": 20,
+    "Injetor D": 5,
+    "MAP": 90,
+    "T.GNV": 80,
+    "P.GNV": 70,
+    "HPS": 60
+}

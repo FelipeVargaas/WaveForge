@@ -1,7 +1,8 @@
 import ttkbootstrap as ttk
-from ttkbootstrap.widgets import Meter
+from ttkbootstrap.widgets import Meter 
 import serial
-import serial.tools.list_ports  # Biblioteca para comunicação Bluetooth e listagem de portas
+import serial.tools.list_ports# Biblioteca para comunicação Bluetooth e listagem de portas
+from config_window import abrir_janela_configuracao
 
 # Função para listar portas COM disponíveis
 bluetooth = None
@@ -63,6 +64,10 @@ conectar_button.pack(side="left", padx=0)
 # Label de status
 status_label = ttk.Label(menu_frame, text="Selecione a porta e o baudrate.", bootstyle="info")
 status_label.pack(side="left", padx=10)
+
+# Botão Config
+config_button = ttk.Button(menu_frame, text="Configurações", bootstyle="info", command=lambda: abrir_janela_configuracao(app))
+config_button.pack(side="right", padx=0)
 
 
 # Título principal
