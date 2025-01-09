@@ -80,7 +80,7 @@ menu_config["menu"] = menu_conexao
 menu_conexao.add_command(label= "Load config", command=lambda: load_config(meters, labels))
 menu_conexao.add_command(label= "Save config", command=lambda: save_config(meters, labels))
 menu_conexao.add_separator()
-menu_conexao.add_command(label= "Editar Medidores", command=lambda: abrir_janela_configuracao(app))
+menu_conexao.add_command(label= "Editar Medidores", command=lambda: abrir_janela_configuracao(app, meters, labels, commands, maxVal, unit))
 
 # Título principal
 titulo_principal = ttk.Label(text="Wave Forge", font=("Helvetica", 32))
