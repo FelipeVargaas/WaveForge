@@ -3,57 +3,9 @@ from ttkbootstrap.widgets import Meter
 import serial
 import serial.tools.list_ports  # Biblioteca para comunicação Bluetooth e listagem de portas
 from config_window import abrir_janela_configuracao
+from save_and_load import load_config, save_config
 from tkinter import filedialog, messagebox
 import json
-
-# Função para carregar configurações do JSON e atualizar os valores dos meters
-def load_config():
-    try:
-        # Abrir uma janela de diálogo para escolher o arquivo JSON
-        filepath = filedialog.askopenfilename(
-            title="Selecione o arquivo de configuração",
-            filetypes=[("Arquivos JSON", "*.json")]
-        )
-        if not filepath:
-            return  # Caso o usuário cancele a seleção
-
-        # Abrir e carregar o conteúdo do arquivo JSON
-        with open(filepath, 'r') as file:
-            config = json.load(file)
-
-        # Atualizar os valores dos meters com base nas chaves do JSON
-        for label, meter in zip(labels, meters):
-            if label in config:
-                value = config[label]
-                meter.amountusedvar.set(value)  # Atualiza o valor interno
-                meter.configure(amountused=value)  # Atualiza visualmente o Meter
-    except json.JSONDecodeError:
-        messagebox.showerror("Erro no arquivo", "O arquivo selecionado não é um JSON válido.")
-    except Exception as e:
-        messagebox.showerror("Erro", f"Ocorreu um erro ao carregar o arquivo: {e}")
-
-        # Função para salvar os valores dos meters em um arquivo JSON
-def save_config():
-    try:
-        # Abrir caixa de diálogo para salvar arquivo
-        filepath = filedialog.asksaveasfilename(
-            title="Salvar arquivo de configuração",
-            defaultextension=".json",
-            filetypes=[("Arquivos JSON", "*.json")]
-        )
-        if not filepath:
-            return  # Caso o usuário cancele o salvamento
-
-        # Criar um dicionário com os valores dos meters
-        config = {label: meter.amountusedvar.get() for label, meter in zip(labels, meters)}
-
-        # Salvar os dados no arquivo JSON
-        with open(filepath, 'w') as file:
-            json.dump(config, file, indent=4)
-
-        messagebox.showinfo("Sucesso", "Configurações salvas com sucesso!")
-    except Exception as e:
-        messagebox.showerror("Erro", f"Ocorreu um erro ao salvar o arquivo: {e}")
 
 
 # Função para listar portas COM disponíveis
@@ -125,8 +77,8 @@ menu_config.pack(side="right", padx=0, pady=0)
 # Submenu de configuracoes
 menu_conexao = ttk.Menu(menu_config, tearoff=False)
 menu_config["menu"] = menu_conexao
-menu_conexao.add_command(label= "Load config", command=load_config)
-menu_conexao.add_command(label= "Save config", command=save_config)
+menu_conexao.add_command(label= "Load config", command=lambda: load_config(meters, labels))
+menu_conexao.add_command(label= "Save config", command=lambda: save_config(meters, labels))
 menu_conexao.add_separator()
 menu_conexao.add_command(label= "Editar Medidores", command=lambda: abrir_janela_configuracao(app))
 
@@ -143,7 +95,6 @@ def send_command(meter_value, command):
         print(f"Comando enviado: {command_message}")
     else:
         print("Bluetooth não está conectado.")
-
 
 
 # Função para criar Meter, Botão de envio e garantir que o valor seja inteiro
