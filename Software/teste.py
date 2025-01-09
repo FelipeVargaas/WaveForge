@@ -32,6 +32,30 @@ def load_config():
     except Exception as e:
         messagebox.showerror("Erro", f"Ocorreu um erro ao carregar o arquivo: {e}")
 
+        # Função para salvar os valores dos meters em um arquivo JSON
+def save_config():
+    try:
+        # Abrir caixa de diálogo para salvar arquivo
+        filepath = filedialog.asksaveasfilename(
+            title="Salvar arquivo de configuração",
+            defaultextension=".json",
+            filetypes=[("Arquivos JSON", "*.json")]
+        )
+        if not filepath:
+            return  # Caso o usuário cancele o salvamento
+
+        # Criar um dicionário com os valores dos meters
+        config = {label: meter.amountusedvar.get() for label, meter in zip(labels, meters)}
+
+        # Salvar os dados no arquivo JSON
+        with open(filepath, 'w') as file:
+            json.dump(config, file, indent=4)
+
+        messagebox.showinfo("Sucesso", "Configurações salvas com sucesso!")
+    except Exception as e:
+        messagebox.showerror("Erro", f"Ocorreu um erro ao salvar o arquivo: {e}")
+
+
 # Função para listar portas COM disponíveis
 bluetooth = None
 def listar_portas():
@@ -94,21 +118,17 @@ conectar_button.pack(side="left", padx=0)
 status_label = ttk.Label(menu_frame, text="Selecione a porta e o baudrate.", bootstyle="info")
 status_label.pack(side="left", padx=10)
 
-# Botão Config
-config_button = ttk.Button(menu_frame, text="Configurações", bootstyle="info", command=lambda: abrir_janela_configuracao(app))
-config_button.pack(side="right", padx=0)
+# Barra de configurações
+menu_config = ttk.Menubutton(menu_frame, text="Configurações", bootstyle="primary")
+menu_config.pack(side="right", padx=0, pady=0)
 
-# Criar o botão de carregar configurações
-load_button = ttk.Button(
-    menu_frame, 
-    text="Carregar Configurações", 
-    bootstyle="primary", 
-    command=load_config
-)
-load_button.pack(side="right", padx=0)
-
-
-
+# Submenu de configuracoes
+menu_conexao = ttk.Menu(menu_config, tearoff=False)
+menu_config["menu"] = menu_conexao
+menu_conexao.add_command(label= "Load config", command=load_config)
+menu_conexao.add_command(label= "Save config", command=save_config)
+menu_conexao.add_separator()
+menu_conexao.add_command(label= "Editar Medidores", command=lambda: abrir_janela_configuracao(app))
 
 # Título principal
 titulo_principal = ttk.Label(text="Wave Forge", font=("Helvetica", 32))
@@ -163,7 +183,7 @@ main_frame.pack(pady=20, padx=40, fill="x", expand=True)
 meters = []
 commands = ["SET_RPM", "SET_PEDAL", "SET_TEMP", "SET_PRESSURE", "SET_FUEL", "SET_AIRFLOW", "SET_OIL_TEMP", "SET_COOLANT_TEMP", 
             "SET_VOLTAGE", "SET_SPEED", "SET_INJECTOR_A", "SET_INJECTOR_B"]
-labels = ["RPM", "Pedal", "Manômetro", "T.Red", "Injetor A", "Injetor B", "Injetor C", "Injetor D", 
+labels = ["RPM", "Pedal", "Manometro", "T.Red", "Injetor A", "Injetor B", "Injetor C", "Injetor D", 
           "MAP", "T.GNV", "P.GNV", "HPS"]
 maxVal = ["5000", "1000", "250", "100", "25", "25", "25", "25", 
           "100", "100", "100", "100"]
