@@ -1,3 +1,4 @@
+import time
 import ttkbootstrap as ttk
 from ttkbootstrap.widgets import Meter
 import serial
@@ -8,6 +9,24 @@ from tkinter import filedialog, messagebox
 import json
 import os
 
+def sendAll():
+    # if not bluetooth:  # Verifica se está conectado antes de enviar os comandos
+    #     status_label.configure(text="Nenhuma conexão ativa!", bootstyle="danger")
+    #     return
+
+    original_text = status_label.cget("text")  # Salva o texto original
+    status_label.configure(text="Enviando comandos...")
+    progress_bar = ttk.Progressbar(menu_frame, mode="determinate", bootstyle="success", maximum=len(meters))
+    progress_bar.pack(side="left", padx=10)
+
+    for i in range(len(meters)):
+        send_command(round(meters[i].amountusedvar.get()), config["meters"][i]["command"])
+        progress_bar["value"] = i + 1
+        app.update_idletasks()  # Atualiza a interface durante o loop
+        time.sleep(0.1)  # Simula o tempo de envio
+
+    progress_bar.destroy()  # Remove a barra de progresso
+    status_label.configure(text=original_text)  # Restaura o texto original
 
 # Função para listar portas COM disponíveis
 bluetooth = None
@@ -34,7 +53,7 @@ def conectar_serial():
 # Janela principal
 app = ttk.Window(themename="darkly")  # Define o tema da interface
 app.title("Wave Forge")
-app.geometry("800x700")  # Aumenta o tamanho da janela para acomodar 12 meters
+app.geometry("750x700")  # Aumenta o tamanho da janela para acomodar 12 meters
 
 # Frame para barra de menu, botão conectar e label de status
 menu_frame = ttk.Frame(app)
@@ -74,6 +93,10 @@ status_label.pack(side="left", padx=10)
 # Barra de configurações
 menu_config = ttk.Menubutton(menu_frame, text="Configurações", bootstyle="primary")
 menu_config.pack(side="right", padx=0, pady=0)
+
+# Botão para conectar
+send_all = ttk.Button(menu_frame, text="Send All", bootstyle="danger", command=sendAll)
+send_all.pack(side="right", padx=2)
 
 # Título principal
 titulo_principal = ttk.Label(text="Wave Forge", font=("Helvetica", 32))
@@ -170,12 +193,22 @@ menu_conexao = ttk.Menu(menu_config, tearoff=False)
 menu_config["menu"] = menu_conexao
 
 menu_conexao.add_command(label="Load config", command=lambda: load_config(meters, labels))
-menu_conexao.add_command(label="Save config", command=lambda: save_config(meters, labels))
+menu_conexao.add_command(label="Save config", command=lambda: save_config(meters,labels,commands,maxVal,unit))
+#menu_conexao.add_command(label="Save config", command=lambda: save_config(meters, labels))
+menu_conexao.add_separator()
+menu_conexao.add_command(
+    label="TITAN",
+    command=lambda: load_config(meters, labels, file_path="C:\gitProjects\WaveForge\Software\igt_default\\titan.json")    
+)
+menu_conexao.add_command(label="Zeus", command=lambda: load_config(meters, labels))
+menu_conexao.add_command(label="Kronos", command=lambda: load_config(meters, labels))
 menu_conexao.add_separator()
 menu_conexao.add_command(
     label="Editar Medidores",
     command=lambda: abrir_janela_configuracao(app, meters, labels, commands, maxVal, unit)
 )
+
+
 
 # Função para enviar o comando e valor via Bluetooth
 def send_command(meter_value, command):

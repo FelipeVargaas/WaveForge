@@ -7,7 +7,7 @@ def abrir_janela_configuracao(parent, meters, labels, commands, max_vals, unit):
     # Criar janela de configuração
     config_window = ttk.Toplevel(parent)
     config_window.title("Editar Configurações")
-    config_window.geometry("600x600")
+    config_window.geometry("500x600")
 
     # Cabeçalhos
     headers = ["Meter", "Command", "Label", "MaxVal", "Unit"]
@@ -44,18 +44,22 @@ def abrir_janela_configuracao(parent, meters, labels, commands, max_vals, unit):
             "maxVal": maxval_entry,
             "unit": unit_entry,
         })  
-
-
-    # Função para salvar alterações
-    def salvar_alteracoes():       
-        configuracoes = {} 
+    def aplicar_configuracoes(meters, labels, config):
         try:
-            # for i, fields in enumerate(entry_fields):
-            #     # Atualizar valores nos arrays
-            #     commands[i] = fields["command"].get()
-            #     labels[i] = fields["label"].get()
-            #     max_vals[i] = int(fields["maxVal"].get())
-            #     unit[i] = fields["unit"].get()
+            for i, meter_config in enumerate(config["meters"]):
+                meters[i].configure(amounttotal=meter_config["maxVal"])  # Atualiza o valor máximo
+                meters[i].configure(subtext=meter_config["label"])  # Atualiza o texto do subtext
+                meters[i].configure(textright=meter_config["unit"])  # Atualiza a unidade
+                labels[i] = meter_config["label"]  # Atualiza a lista de labels
+        except AttributeError as e:
+            print(f"Erro ao aplicar configurações: {e}")
+            raise
+
+
+
+    def salvar_alteracoes():
+        configuracoes = {}
+        try:
             configuracoes = {"meters": []}  # Inicia o dicionário com uma lista vazia
 
             for entry in entry_fields:
@@ -65,14 +69,8 @@ def abrir_janela_configuracao(parent, meters, labels, commands, max_vals, unit):
                     "maxVal": int(entry["maxVal"].get()),  # Converte para int, se necessário
                     "unit": entry["unit"].get(),
                 })
-                # Atualizar os meters correspondentes
-                # meters[i].configure(subtext=labels[i])
-                # meters[i].configure(amounttotal=max_vals[i])
-                # meters[i].configure(textright=unit[i])
-                # Messagebox.show_info("Sucesso", "Configurações atualizadas com sucesso!")
             
             # Abrir diálogo para salvar arquivo
-            
             file_path = filedialog.asksaveasfilename(
                 defaultextension=".json",
                 filetypes=[("Arquivos JSON", "*.json"), ("Todos os Arquivos", "*.*")],
@@ -83,12 +81,17 @@ def abrir_janela_configuracao(parent, meters, labels, commands, max_vals, unit):
                     with open(file_path, "w") as json_file:
                         json.dump(configuracoes, json_file, indent=4)
                     Messagebox.show_info("Sucesso", f"Configurações salvas com sucesso em {file_path}!")
+                    
+                    # Atualizar os meters após salvar
+                    aplicar_configuracoes(meters, labels, configuracoes)
                 except Exception as e:
                     Messagebox.show_error("Erro", f"Erro ao salvar o arquivo: {e}")
-            
+                    print("Erro", f"Erro ao salvar o arquivo: {e}")
             config_window.destroy()
         except ValueError:
             Messagebox.show_error("Erro", "Certifique-se de que os valores de MaxVal são números inteiros.")
+
+
 
     # Botão para salvar as alterações
     save_button = ttk.Button(
