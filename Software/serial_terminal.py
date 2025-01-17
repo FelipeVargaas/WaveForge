@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import threading
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
 
 class SerialTerminal:
     def __init__(self, serial_connection):
@@ -72,17 +74,17 @@ class SerialTerminal:
         bottom_frame.pack(fill=tk.X, padx=10, pady=5)
 
         # Campo de entrada
-        self.entry = tk.Entry(bottom_frame)
+        self.entry = ttk.Entry(bottom_frame)
         self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         self.entry.bind("<Return>", lambda event: self.send_command())
 
         # Botão de enviar
-        send_button = tk.Button(bottom_frame, text="Enviar", command=self.send_command)
+        send_button = ttk.Button(bottom_frame, bootstyle="info", text="Enviar", command=self.send_command)
         send_button.pack(side=tk.LEFT)
 
         # Botão de limpar
-        clear_button = tk.Button(self.root, text="Limpar", command=self.clear_terminal)
-        clear_button.pack(pady=5)
+        clear_button = ttk.Button(bottom_frame, bootstyle="danger", text="Limpar", command=self.clear_terminal)
+        clear_button.pack(padx=5)
 
         # Thread para leitura serial
         serial_thread = threading.Thread(target=self.read_serial, daemon=True)

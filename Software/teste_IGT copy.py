@@ -130,14 +130,6 @@ def open_terminal():
     terminal = SerialTerminal(bluetooth)
     terminal.run()
 
-    # Botão para abrir o terminal
-open_terminal_button = ttk.Button(app, text="Abrir Terminal Serial", command=open_terminal)
-open_terminal_button.pack(pady=20)
-
-# # Título principal
-# titulo_principal = ttk.Label(text="Wave Forge", font=("Helvetica", 32))
-# titulo_principal.pack(pady=5)
-############################
 # Frame para o título e o logo
 titulo_frame = ttk.Frame(app)
 titulo_frame.pack(fill="x", pady=10)
@@ -156,7 +148,6 @@ titulo_frame.grid_columnconfigure(0, weight=1)  # Coluna do logo
 titulo_frame.grid_columnconfigure(1, weight=3)  # Coluna do título
 titulo_frame.grid_columnconfigure(2, weight=6)  # Coluna vazia para equilibrar
 titulo_frame.grid_columnconfigure(3, weight=2)  # Coluna vazia para equilibrar
-############################
 
 # Main frame
 main_frame = ttk.Frame(app)
@@ -251,14 +242,11 @@ menu_config["menu"] = menu_conexao
 
 menu_conexao.add_command(label="Carregar Valores", command=lambda: load_config(meters, labels))
 menu_conexao.add_command(label="Salvar Valores", command=lambda: save_config(meters,labels))
-#menu_conexao.add_command(label="Save config", command=lambda: save_config(meters, labels))
-# menu_conexao.add_separator()
-# menu_conexao.add_command(
-#     label="TITAN",
-#     command=lambda: load_config(meters, labels, file_path="titan.json")    
-# )
-# menu_conexao.add_command(label="Zeus", command=lambda: load_config(meters, labels))
-# menu_conexao.add_command(label="Kronos", command=lambda: load_config(meters, labels))
+menu_conexao.add_separator()
+    # Botão para abrir o terminal
+# open_terminal_button = ttk.Button(app, text="Abrir Terminal Serial", command=open_terminal)
+# open_terminal_button.pack(pady=20)
+menu_conexao.add_command(label="Terminal Serial", command=open_terminal)
 menu_conexao.add_separator()
 menu_conexao.add_command(
     label="Editar Medidores",
