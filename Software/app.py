@@ -5,14 +5,14 @@ import serial
 import serial.tools.list_ports  # Biblioteca para comunicação Bluetooth e listagem de portas
 from config_window import abrir_janela_configuracao
 from save_and_load import load_config, save_config
-from tkinter import filedialog, messagebox
+from tkinter import Canvas, PhotoImage, filedialog, messagebox
 import json
 import os
 
 def sendAll():
-    # if not bluetooth:  # Verifica se está conectado antes de enviar os comandos
-    #     status_label.configure(text="Nenhuma conexão ativa!", bootstyle="danger")
-    #     return
+    if not conectado:  # Verifica se está conectado antes de enviar os comandos
+        status_label.configure(text="Nenhuma conexão ativa!", bootstyle="danger")
+        return
 
     original_text = status_label.cget("text")  # Salva o texto original
     status_label.configure(text="Enviando comandos...")
@@ -34,21 +34,35 @@ def listar_portas():
     portas = serial.tools.list_ports.comports()
     return [porta.device for porta in portas]
 
-# Função para conectar à porta serial escolhida
-def conectar_serial():
-    porta = porta_var.get()
-    baudrate = baudrate_var.get()
-    
-    if porta and baudrate:
-        try:
-            global bluetooth
-            bluetooth = serial.Serial(porta, baudrate, timeout=1)
-            status_label.configure(text=f"Conectado à {porta} com baudrate {baudrate}")
-        except serial.SerialException as e:
-            status_label.configure(text=f"Erro ao conectar")
-            #status_label.configure(text=f"Erro ao conectar: {e}")
+# Variável de estado para rastrear conexão
+conectado = False
+
+# Função para alternar entre conectar e desconectar
+def alternar_conexao():
+    global conectado, bluetooth
+
+    if not conectado:
+        # Tentativa de conectar
+        porta = porta_var.get()
+        baudrate = baudrate_var.get()
+
+        if porta and baudrate:
+            try:
+                bluetooth = serial.Serial(porta, baudrate, timeout=1)
+                status_label.configure(text=f"Conectado à {porta} com baudrate {baudrate}", bootstyle="success")
+                conectar_button.configure(text="Desconectar", bootstyle="danger")
+                conectado = True
+            except serial.SerialException:
+                status_label.configure(text="Erro ao conectar!")
+        else:
+            status_label.configure(text="Selecione uma porta e baudrate válidos!")
     else:
-        status_label.configure(text="Selecione uma porta e baudrate válidos!")
+        # Desconectar
+        if bluetooth.is_open:
+            bluetooth.close()
+        status_label.configure(text="Desconectado",bootstyle="danger")
+        conectar_button.configure(text="Conectar", bootstyle="success")
+        conectado = False
 
 # Janela principal
 app = ttk.Window(themename="darkly")  # Define o tema da interface
@@ -82,8 +96,10 @@ baudrates = [9600, 19200, 38400, 57600, 115200]
 for baud in baudrates:
     menu_conexao.add_radiobutton(label=f"{baud} Baud", variable=baudrate_var, value=baud)
 
-# Botão para conectar
-conectar_button = ttk.Button(menu_frame, text="Conectar", bootstyle="success", command=conectar_serial)
+# Botão para conectar/desconectar
+conectar_button = ttk.Button(
+    menu_frame, text="Conectar", bootstyle="success", command=alternar_conexao
+)
 conectar_button.pack(side="left", padx=0)
 
 # Label de status
@@ -192,23 +208,21 @@ for i in range(12):
 menu_conexao = ttk.Menu(menu_config, tearoff=False)
 menu_config["menu"] = menu_conexao
 
-menu_conexao.add_command(label="Load config", command=lambda: load_config(meters, labels))
-menu_conexao.add_command(label="Save config", command=lambda: save_config(meters,labels,commands,maxVal,unit))
+menu_conexao.add_command(label="Carregar Valores", command=lambda: load_config(meters, labels))
+menu_conexao.add_command(label="Salvar Valores", command=lambda: save_config(meters,labels))
 #menu_conexao.add_command(label="Save config", command=lambda: save_config(meters, labels))
-menu_conexao.add_separator()
-menu_conexao.add_command(
-    label="TITAN",
-    command=lambda: load_config(meters, labels, file_path="C:\gitProjects\WaveForge\Software\igt_default\\titan.json")    
-)
-menu_conexao.add_command(label="Zeus", command=lambda: load_config(meters, labels))
-menu_conexao.add_command(label="Kronos", command=lambda: load_config(meters, labels))
+# menu_conexao.add_separator()
+# menu_conexao.add_command(
+#     label="TITAN",
+#     command=lambda: load_config(meters, labels, file_path="titan.json")    
+# )
+# menu_conexao.add_command(label="Zeus", command=lambda: load_config(meters, labels))
+# menu_conexao.add_command(label="Kronos", command=lambda: load_config(meters, labels))
 menu_conexao.add_separator()
 menu_conexao.add_command(
     label="Editar Medidores",
     command=lambda: abrir_janela_configuracao(app, meters, labels, commands, maxVal, unit)
 )
-
-
 
 # Função para enviar o comando e valor via Bluetooth
 def send_command(meter_value, command):
