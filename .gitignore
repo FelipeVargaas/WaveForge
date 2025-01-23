@@ -9,6 +9,15 @@
 UserInterfaceState.xcuserstate
 $RECYCLE.BIN/
 
+# Ignorar arquivos e pastas Python geradas automaticamente
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignorar pastas de build e distribuições
+build/
+dist/
+
 *.log
 log.txt
 
